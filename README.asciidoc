@@ -1,0 +1,5 @@
+A Template for an ansible project
+===================
+:toc:
+
+to be done...

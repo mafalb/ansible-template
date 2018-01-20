@@ -1,0 +1,90 @@
+---
+
+- hosts: localhost
+
+  vars:
+
+    # override inventory wide settings
+    # this is meant to run as local user
+    #
+    ansible_become: false
+
+  vars_files:
+    
+    # vars necessary for creating Vagrant file
+    #
+    - vars/vagrant.yml
+
+  tasks:
+
+    # Attention: do not edit Vagrantfile directly
+    # your changes will be reverted by subsequent run of this playbook
+    # instead, edit vars/vagrant.yml
+    #
+    - name: Vagrantfile
+      template:
+        src: Vagrantfile.j2
+        dest: "{{ playbook_dir }}/Vagrantfile"
+
+    - name: directories part 1
+      file:
+        path: "{{ item[0] }}/{{ item[1] }}"
+        state: directory
+      with_nested:
+        - - inventories/vagrant
+          - inventories/prod
+        - - group_vars/all
+          - host_vars
+
+    - name: directories part 2
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - inventories/shared
+        - roles
+        - vars
+        - templates
+        - files
+        - plays
+
+    - name: symlink to vagrant hostlist
+      file:
+        src: ../../.vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory
+        dest: inventories/vagrant/001_vagrant_ansible_inventory
+        state: link
+        force: yes
+
+    - name: vagrant specific host_vars for localhost
+      copy:
+        src: localhost.yml
+        dest: "{{ playbook_dir }}/inventories/vagrant/host_vars/localhost"
+        force: no
+
+    - name: vagrant specific group_vars
+      copy:
+        src: vagrant_group_vars.yml
+        dest: "{{ playbook_dir }}/inventories/vagrant/group_vars/all/vagrant"
+        force: no
+
+    - name: symlinks to common directories
+      file:
+        src: "../{{ item }}"
+        dest: "{{ playbook_dir }}/plays/{{ item }}"
+        state: link
+      with_items:
+        - files
+        - templates
+        - vars
+
+    - name: ansible config
+      copy:
+        src: ansible.cfg
+        dest: "{{ playbook_dir }}/ansible.cfg"
+        force: no
+
+    - name: site.yml
+      copy:
+        content: "# your plays go here"
+        dest: "{{ playbook_dir }}/site.yml"
+        force: no

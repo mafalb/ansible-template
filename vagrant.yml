@@ -1,0 +1,28 @@
+---
+
+#
+# for use with
+# vagrant provision
+#
+# you better have a ssh rsa key for this to work
+#
+# this is preparing your vagrant box so that it
+# will work with plain ansible, i.e.
+# circumvent vagrant and do direct ssh login
+#
+# basically we put your ssh key into authorized keys
+#
+- hosts: all
+
+  tasks:
+
+    - name: Set authorized key took from file
+      authorized_key:
+        user: vagrant
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+#    - name: fix selinux context of eth1 config
+#      file:
+#        name: /etc/sysconfig/network-scripts/ifcfg-eth1
+#        setype: net_conf_t
